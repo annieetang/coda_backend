@@ -138,6 +138,8 @@ async def get_measure_from_second(data: MeasureRequest):
 
     # Calculate measure number
     beats_per_measure = time_signature.numerator
+    if bpm is None:
+        bpm = 120  # Default to 120 BPM if no tempo marking found
     measure_number = math.floor(data.second / 60 * bpm / beats_per_measure) + 1
     
     return {"measure_number": measure_number}
