@@ -16,7 +16,7 @@ def get_music21_score_notation(score_filename: str, start_m: Optional[int] = Non
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(CURRENT_DIR)))
     MUSIC_DIR = os.path.join(PROJECT_ROOT, "cs99/coda_backend/music_scores")
 
-    raw_score = converter.parse(MUSIC_DIR + "/" + score_filename)
+    raw_score = converter.parse(score_filename)
     score = raw_score
 
     if not start_m and not end_m:
