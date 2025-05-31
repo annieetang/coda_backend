@@ -183,7 +183,7 @@ async def save_musicxml_to_file(data: MusicXMLRequest):
 async def generate_exercises(data: GenerateRequest):
     """Generate exercises from a score excerpt."""
     score_excerpt = get_music21_score_notation(
-        data.filename,
+        MUSIC_DIR + "/" + data.filename,
         data.start_measure,
         data.end_measure
     )
