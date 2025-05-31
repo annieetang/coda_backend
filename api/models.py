@@ -25,3 +25,9 @@ class ExerciseResponse(BaseModel):
     exercises: Dict[str, List[tuple[Optional[str], Optional[str]]]]
     start_measure: int
     end_measure: int 
+
+class FileDataRequest(BaseModel):
+    filename: str
+
+class FileDataResponse(BaseModel):
+    data: str

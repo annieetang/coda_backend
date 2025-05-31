@@ -5,12 +5,13 @@ from werkzeug.utils import secure_filename
 from collections import defaultdict
 from music21 import *
 import math
-
+import base64
 from services.database import MongoDatabase
 from services.soundslice import SoundsliceService
 from api.models import (
     MeasureRequest, MeasureResponse, GenerateRequest,
-    SliceRequest, MusicXMLRequest, ExerciseResponse
+    SliceRequest, MusicXMLRequest, ExerciseResponse,
+    FileDataRequest, FileDataResponse
 )
 from music.processor import get_music21_score_notation, get_musicxml_from_music21, get_music21_from_music_matrix_representation
 from music.exercise import get_all_exercises
@@ -107,6 +108,19 @@ async def list_files() -> List[str]:
     except Exception as e:
         print(f"Error in list_files: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error listing files: {str(e)}")
+
+@router.post("/get_file_mxl")
+async def get_file_mxl(data: FileDataRequest):
+    """Get the MXL file data."""
+    score_name = MUSIC_DIR + "/" + data.filename
+    # Read the MXL file
+    with open(score_name, "rb") as f:
+        score_mxl = f.read()
+    # Return MXL with proper content type
+    return Response(
+        content=score_mxl,
+        media_type="application/vnd.recordare.musicxml+xml"
+    )
 
 @router.post("/get_measure_from_second", response_model=MeasureResponse)
 async def get_measure_from_second(data: MeasureRequest):
