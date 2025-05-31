@@ -19,12 +19,12 @@ class SoundsliceService:
     def __init__(self):
         self.client = Client(SOUNDSLICE_APP_ID, SOUNDSLICE_PASSWORD)
 
-    def create_and_upload_slice(self, score_name: str, musicxml: Optional[str] = None) -> str:
+    def create_and_upload_slice(self, score_name: str, musicxml: Optional[str] = None, title: Optional[str] = None, composer: Optional[str] = None) -> str:
         """Create a new Soundslice score and upload notation."""
         # Create a new slice
         res = self.client.create_slice(
-            name=score_name,
-            artist="Dummy Artist",
+            name=title,
+            artist=composer,
             embed_status=Constants.EMBED_STATUS_ON_ALLOWLIST,
         )
         scorehash = res['scorehash']

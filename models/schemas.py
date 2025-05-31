@@ -16,6 +16,8 @@ class GenerateRequest(BaseModel):
 class SliceRequest(BaseModel):
     filename: str
     musicxml: Optional[str] = None
+    title: Optional[str] = None
+    composer: Optional[str] = None
 
 class MusicXMLRequest(BaseModel):
     filename: str
