@@ -19,8 +19,12 @@ class SoundsliceService:
     def __init__(self):
         self.client = Client(SOUNDSLICE_APP_ID, SOUNDSLICE_PASSWORD)
 
-    def create_and_upload_slice(self, score_name: str, musicxml: Optional[str] = None, title: Optional[str] = None, composer: Optional[str] = None) -> str:
+    def create_and_upload_slice(self, score_name: str, musicxml: str, title: str, composer: str) -> str:
         """Create a new Soundslice score and upload notation."""
+
+        if not musicxml:
+            raise ValueError("No musicxml provided. Please re-upload the score")
+
         # Create a new slice
         res = self.client.create_slice(
             name=title,
@@ -33,10 +37,7 @@ class SoundsliceService:
         callback_url = f"{BASE_URL}/slice_callback"
         
         # Handle the XML content
-        if musicxml:
-            fp = BytesIO(musicxml.encode('utf-8'))
-        else:
-            fp = open(MUSIC_DIR + "/" + score_name, "rb")
+        fp = BytesIO(musicxml.encode('utf-8'))
         
         try:
             # Upload the notation
