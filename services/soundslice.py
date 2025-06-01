@@ -29,6 +29,8 @@ class SoundsliceService:
             score = db.get_score(score_name)
             if score:
                 musicxml = score['data']
+                if not musicxml:
+                    raise ValueError("Score data is empty")
             else:
                 raise ValueError("Score not found")
 
@@ -44,7 +46,10 @@ class SoundsliceService:
         callback_url = f"{BASE_URL}/slice_callback"
         
         # Handle the XML content
-        file_pointer = BytesIO(musicxml)
+        if isinstance(musicxml, str):
+            file_pointer = BytesIO(musicxml.encode('utf-8'))
+        else:
+            file_pointer = BytesIO(musicxml)
         
         try:
             # Upload the notation

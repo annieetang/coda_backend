@@ -27,10 +27,7 @@ class MongoDatabase:
         self.client = MongoClient(self.uri)
         self.db = self.client[mongodb_database]
         self.scores = self.db['scores']
-        
-        # Create indexes
-        # self.scores.create_index('score_name', unique=True)
-        # self.scores.create_index('composer')
+        self.exercises = self.db['exercises']
 
     def save_score(self, score_name: str, title: str = None, composer: str = None, data: bytes = None, score_hash: bytes = None) -> bool:
         """
@@ -129,3 +126,43 @@ class MongoDatabase:
         except Exception as e:
             print(f"Error deleting score: {e}")
             return False 
+    
+    def save_exercise(self, score_name: str, title: str = None, composer: str = None, data: bytes = None, score_hash: bytes = None) -> bool:
+        """
+        Save an exercise to MongoDB with all required fields.
+        """
+        try:
+            self.exercises.update_one(
+                {'score_name': score_name},
+                {'$set': {
+                    'title': title or score_name,
+                    'composer': composer,
+                    'data': Binary(data),
+                    'score_hash': score_hash
+                }},
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            print(f"Error saving exercise: {e}")
+            return False
+    
+    def update_exercise_with_slicehash(self, score_name: str, soundslice_hash: str) -> bool:
+        """
+        Update an exercise with a Soundslice hash.
+        """
+        try:
+            self.exercises.update_one({'score_name': score_name}, {'$set': {'soundslice_hash': soundslice_hash}})
+            return True
+        except Exception as e:
+            print(f"Error updating exercise with Soundslice hash: {e}")
+            return False
+
+    def get_exercise(self, score_name: str) -> Optional[Dict]:
+        """
+        Retrieve an exercise by its name.
+        """
+        result = self.exercises.find_one({'score_name': score_name})
+        if not result:
+            return None
+        return result

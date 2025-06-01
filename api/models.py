@@ -18,6 +18,7 @@ class SliceRequest(BaseModel):
     musicxml: Optional[str] = None
     title: Optional[str] = None
     composer: Optional[str] = None
+    is_exercise: bool
 
 class MusicXMLRequest(BaseModel):
     filename: str
@@ -33,3 +34,10 @@ class FileDataRequest(BaseModel):
 
 class FileDataResponse(BaseModel):
     data: str
+
+class ExerciseRequest(BaseModel):
+    filename: str
+    musicxml: str
+    title: Optional[str] = None
+    composer: Optional[str] = None
+    is_exercise: bool

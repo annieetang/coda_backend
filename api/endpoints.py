@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 import os
 from werkzeug.utils import secure_filename
 from collections import defaultdict
-from music21 import converter
+from music21 import *
 import math
 import base64
 from services.database import MongoDatabase
@@ -11,8 +11,9 @@ from services.soundslice import SoundsliceService
 from api.models import (
     MeasureRequest, MeasureResponse, GenerateRequest,
     SliceRequest, MusicXMLRequest, ExerciseResponse,
-    FileDataRequest, FileDataResponse
+    FileDataRequest, FileDataResponse, ExerciseRequest
 )
+from fastapi.responses import FileResponse
 from music.processor import get_music21_score_notation, get_musicxml_from_music21, get_music21_from_music_matrix_representation
 from music.exercise import get_all_exercises
 
@@ -45,11 +46,9 @@ async def test_endpoint():
 async def upload_score(file: UploadFile = File(...)) -> Response:
     """Upload a MusicXML score file."""
     try:
-        print("trying to upload score")
         if not file:
             raise HTTPException(status_code=400, detail='No file uploaded')
         
-        print("file.filename", file.filename)
         if file.filename == '':
             raise HTTPException(status_code=400, detail='No selected file')
 
@@ -58,17 +57,20 @@ async def upload_score(file: UploadFile = File(...)) -> Response:
 
         filename = secure_filename(file.filename)
         try:
-            contents = await file.read()
-            with open(filename, 'wb') as f:
-                f.write(contents)
-
-            # Validate the file with music21
-            _ = converter.parse(filename)
-
-            # Save to database
-            db.save_score(filename, title=filename, composer=None, data=contents)
-            
-            return Response(status_code=200)
+            # Read file as bytes
+            contents = await file.read()    
+            try:
+                # Validate the file with music21
+                _ = converter.parse(contents)
+                
+                # Save to database
+                success = db.save_score(filename, title=filename, composer=None, data=contents)
+                if not success:
+                    raise HTTPException(status_code=500, detail="Failed to save score to database")
+                
+                return Response(status_code=200)
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f'Invalid MusicXML file: {str(e)}')
 
         except Exception as e:
             raise HTTPException(status_code=400, detail=f'Invalid MusicXML file: {str(e)}')
@@ -92,22 +94,33 @@ async def list_files() -> List[str]:
 async def get_file_mxl(data: FileDataRequest):
     """Get the MXL file data."""
     score = db.get_score(data.filename)
-    if score:
-        return Response(
-            content=score['data'],
-            media_type="application/vnd.recordare.musicxml+xml"
-        )
+    if score and score.get('data'):
+        try:
+            file_data = score['data']
+            
+            # Ensure we're working with bytes
+            if not isinstance(file_data, bytes):
+                file_data = bytes(file_data)
+            
+            if data.filename.endswith(".mxl"):
+                return Response(
+                    content=file_data,
+                    media_type="application/vnd.recordare.musicxml+xml",
+                    headers={"Content-Disposition": f"attachment; filename={data.filename}"}
+                )
+            elif data.filename.endswith(".musicxml") or data.filename.endswith(".xml"):
+                return Response(
+                    content=file_data,
+                    media_type="application/xml",
+                    headers={"Content-Disposition": f"attachment; filename={data.filename}"}
+                )
+            else:
+                raise HTTPException(status_code=400, detail="Invalid file type")
+        except Exception as e:
+            print(f"Error processing file data: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
     else:
-        raise HTTPException(status_code=404, detail="Score not found")
-    # score_name = MUSIC_DIR + "/" + data.filename
-    # # Read the MXL file
-    # with open(score_name, "rb") as f:
-    #     score_mxl = f.read()
-    # # Return MXL with proper content type
-    # return Response(
-    #     content=score_mxl,
-    #     media_type="application/vnd.recordare.musicxml+xml"
-    # )
+        raise HTTPException(status_code=404, detail="Score not found or no data available")
 
 @router.post("/get_measure_from_second", response_model=MeasureResponse)
 async def get_measure_from_second(data: MeasureRequest):
@@ -152,11 +165,19 @@ async def get_slicehash(data: SliceRequest):
         return {"slicehash": scoreToScorehash[score_name]}
     else:
         scorehash = soundslice.create_and_upload_slice(score_name, data.musicxml, data.title, data.composer)
-        # check if the score already exists in the database
-        if db.get_score(score_name):
-            db.update_score_with_slicehash(score_name, scorehash)
+
+        # if the score is an exercise, look in a different part of the mongoDB server
+        if data.is_exercise:
+            score = db.get_exercise(score_name)
+            if score:
+                db.update_exercise_with_slicehash(score_name, scorehash)
+            else:
+                db.save_exercise(score_name, score_hash=bytes(scorehash, 'utf-8'), title=data.title, composer=data.composer, data=None)
         else:
-            db.save_score(score_name, score_hash=bytes(scorehash, 'utf-8'), title=data.title, composer=data.composer, data=None)
+            if db.get_score(score_name):
+                db.update_score_with_slicehash(score_name, scorehash)
+            else:
+                db.save_score(score_name, score_hash=bytes(scorehash, 'utf-8'), title=data.title, composer=data.composer, data=None)
 
         scoreToScorehash[score_name] = scorehash
         return {"slicehash": scorehash}
