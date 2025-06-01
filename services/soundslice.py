@@ -4,7 +4,9 @@ from typing import Optional
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from services.database import MongoDatabase
 
+db = MongoDatabase()
 load_dotenv()
 
 SOUNDSLICE_APP_ID = os.getenv("SOUNDSLICE_APP_ID")
@@ -23,7 +25,12 @@ class SoundsliceService:
         """Create a new Soundslice score and upload notation."""
 
         if not musicxml:
-            raise ValueError("No musicxml provided. Please re-upload the score")
+            # try to find the score in the database
+            score = db.get_score(score_name)
+            if score:
+                musicxml = score['data']
+            else:
+                raise ValueError("Score not found")
 
         # Create a new slice
         res = self.client.create_slice(
@@ -37,16 +44,16 @@ class SoundsliceService:
         callback_url = f"{BASE_URL}/slice_callback"
         
         # Handle the XML content
-        fp = BytesIO(musicxml.encode('utf-8'))
+        file_pointer = BytesIO(musicxml)
         
         try:
             # Upload the notation
             self.client.upload_slice_notation(
                 scorehash=scorehash,
-                fp=fp,
+                fp=file_pointer,
                 callback_url=callback_url
             )
         finally:
-            fp.close()
+            file_pointer.close()
         
         return scorehash 
