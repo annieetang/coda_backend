@@ -114,7 +114,12 @@ class ExerciseScore:
         """
 
         # TODO: if the part doesn't have notes, don't process it
-        return [ExercisePart(part, self.key_signature, self.time_signature, self.quantization) for part in self.original_stream.parts]
+        # return [ExercisePart(part, self.key_signature, self.time_signature, self.quantization) for part in self.original_stream.parts if part not None]
+        parts = []
+        for part in self.original_stream.parts:
+            if part.recurse(classFilter=('Note', 'Chord')):
+                parts.append(ExercisePart(part, self.key_signature, self.time_signature, self.quantization))
+        return parts
 
 class ExercisePart():
     def __init__(self, music21_part, key_signature, time_signature, quantization):
@@ -127,7 +132,10 @@ class ExercisePart():
     def _extract_lines(self):
         # this extracts the voices from the parts
         split_voices = self.original_stream.voicesToParts()
-        lines = [ExerciseLine(line, self.key_signature, self.time_signature, self.quantization) for line in split_voices.parts]
+        lines = []
+        for line in split_voices.parts:
+            if line.recurse(classFilter=('Note', 'Chord')):
+                lines.append(ExerciseLine(line, self.key_signature, self.time_signature, self.quantization))
         return lines
         # TODO: also get rid of parts with no notes in it
 
