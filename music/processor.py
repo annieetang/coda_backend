@@ -5,6 +5,9 @@ from music.matrix import MusicMatrixRepresentation
 import numpy as np
 from collections import defaultdict
 import os
+from services.database import MongoDatabase
+
+db = MongoDatabase()
 
 
 def get_music21_score_notation(score_filename: str, start_m: Optional[int] = None, end_m: Optional[int] = None) -> stream.Score:
@@ -12,16 +15,18 @@ def get_music21_score_notation(score_filename: str, start_m: Optional[int] = Non
     Returns the music21 score notation for the given score filename.
     Optionally extracts a specific measure range.
     """
-    CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(CURRENT_DIR)))
-    MUSIC_DIR = os.path.join(PROJECT_ROOT, "cs99/coda_backend/music_scores")
+    score_obj = db.get_score(score_filename)
+    score_binary = score_obj['data']
+    if score_binary != b'':
+        score = converter.parse(score_binary)
+    else:
+        raise ValueError("Score not found in database")
 
-    raw_score = converter.parse(score_filename)
-    score = raw_score
 
     if not start_m and not end_m:
         return score
-    elif not start_m:
+    
+    if not start_m:
         start_m = 1
     elif not end_m:
         end_m = score.parts[0].measure(-1).number

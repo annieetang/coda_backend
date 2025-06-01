@@ -44,6 +44,8 @@ class MongoDatabase:
             bool: True if save was successful, False otherwise
         """
         try:
+            if data is None:
+                data = b''
             # if score already exists, ignore upload
             if self.scores.find_one({'score_name': score_name}):
                 print("score already exists, ignoring upload")
@@ -132,6 +134,8 @@ class MongoDatabase:
         Save an exercise to MongoDB with all required fields.
         """
         try:
+            if data is None:
+                data = b''
             self.exercises.update_one(
                 {'score_name': score_name},
                 {'$set': {

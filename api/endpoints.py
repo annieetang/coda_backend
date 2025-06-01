@@ -99,7 +99,7 @@ async def get_file_mxl(data: FileDataRequest):
             file_data = score['data']
             
             # Ensure we're working with bytes
-            if not isinstance(file_data, bytes):
+            if file_data == b'':
                 file_data = bytes(file_data)
             
             if data.filename.endswith(".mxl"):
@@ -125,8 +125,7 @@ async def get_file_mxl(data: FileDataRequest):
 @router.post("/get_measure_from_second", response_model=MeasureResponse)
 async def get_measure_from_second(data: MeasureRequest):
     """Convert a time in seconds to a measure number."""
-    score_name = MUSIC_DIR + "/" + data.filename
-    score = get_music21_score_notation(score_name)
+    score = get_music21_score_notation(data.filename)
     
     # Get time signature
     time_signature = score.recurse().getElementsByClass(meter.TimeSignature)[0]
@@ -196,7 +195,7 @@ async def save_musicxml_to_file(data: MusicXMLRequest):
 async def generate_exercises(data: GenerateRequest):
     """Generate exercises from a score excerpt."""
     score_excerpt = get_music21_score_notation(
-        MUSIC_DIR + "/" + data.filename,
+        data.filename,
         data.start_measure,
         data.end_measure
     )

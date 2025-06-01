@@ -29,7 +29,7 @@ class SoundsliceService:
             score = db.get_score(score_name)
             if score:
                 musicxml = score['data']
-                if not musicxml:
+                if musicxml == b'':
                     raise ValueError("Score data is empty")
             else:
                 raise ValueError("Score not found")
