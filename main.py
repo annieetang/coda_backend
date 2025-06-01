@@ -35,7 +35,4 @@ for route in app.routes:
 async def startup_event():
     """Initialize database and load score hashes."""
     db = MongoDatabase()
-    print("Loading score hashes from MongoDB...")
-    print(f"Music directory: {MUSIC_DIR}")
-    print(f"Available music files: {[f for f in os.listdir(MUSIC_DIR) if f.endswith(('.mxl', '.musicxml', '.xml'))]}")
     print("Backend startup complete") 
