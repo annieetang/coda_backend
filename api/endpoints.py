@@ -1,5 +1,5 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Response, Request
-from typing import List, Dict, Any
+from fastapi import APIRouter, UploadFile, File, HTTPException, Response, Request, Form
+from typing import List, Dict, Any, Tuple
 import os
 from werkzeug.utils import secure_filename
 from collections import defaultdict
@@ -11,11 +11,13 @@ from services.soundslice import SoundsliceService
 from api.models import (
     MeasureRequest, MeasureResponse, GenerateRequest,
     SliceRequest, MusicXMLRequest, ExerciseResponse,
-    FileDataRequest, FileDataResponse, ExerciseRequest
+    FileDataRequest, FileDataResponse, ExerciseRequest,
+    DeleteScoreRequest
 )
 from fastapi.responses import FileResponse
 from music.processor import get_music21_score_notation, get_musicxml_from_music21, get_music21_from_music_matrix_representation
 from music.exercise import get_all_exercises
+
 
 # Create router
 router = APIRouter()
@@ -43,7 +45,11 @@ async def test_endpoint():
     return {"message": "Router is working!"}
 
 @router.post("/upload_score")
-async def upload_score(file: UploadFile = File(...)) -> Response:
+async def upload_score(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    composer: str = Form(...)
+) -> Response:
     """Upload a MusicXML score file."""
     try:
         if not file:
@@ -56,15 +62,20 @@ async def upload_score(file: UploadFile = File(...)) -> Response:
             raise HTTPException(status_code=400, detail='Invalid file type')
 
         filename = secure_filename(file.filename)
+        print(filename)
+        print(title)
+        print(composer)
         try:
             # Read file as bytes
             contents = await file.read()    
             try:
                 # Validate the file with music21
                 _ = converter.parse(contents)
-                
+                print("passed music21 validation")
+
                 # Save to database
-                success = db.save_score(filename, title=filename, composer=None, data=contents)
+                success = db.save_score(filename, title=title, composer=composer, data=contents)
+                print("saved to database")
                 if not success:
                     raise HTTPException(status_code=500, detail="Failed to save score to database")
                 
@@ -80,12 +91,19 @@ async def upload_score(file: UploadFile = File(...)) -> Response:
             raise e
         raise HTTPException(status_code=500, detail=f'Server error: {str(e)}')
 
-@router.get("/list_files", response_model=List[str])
-async def list_files() -> List[str]:
+@router.get("/list_files", response_model=List[Dict])
+async def list_files() -> List[Dict]:
     """List all available music files."""
     try:
         scores = db.get_all_scores()
-        return [score['score_name'] for score in scores]
+        res = []
+        for score in scores:
+            title = score["title"] if score["title"] is not None else score['score_name']
+            composer = score['composer'] if score['composer'] is not None else ""
+            res.append({'title': title, 'composer': composer, 'score_name': score['score_name'], 'filename': score['score_name']})
+        return res
+
+
     except Exception as e:
         print(f"Error in list_files: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error listing files: {str(e)}")
@@ -218,3 +236,9 @@ async def generate_exercises(data: GenerateRequest):
         "start_measure": data.start_measure,
         "end_measure": data.end_measure
     } 
+
+@router.post("/delete_score")
+async def delete_score(data: DeleteScoreRequest):
+    """Delete a score from the database."""
+    db.delete_score(data.filename)
+    return {"success": True}

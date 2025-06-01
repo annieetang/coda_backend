@@ -2,7 +2,7 @@ from pymongo import MongoClient
 from bson.binary import Binary
 import os
 from dotenv import load_dotenv
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Tuple
 
 # Load environment variables
 load_dotenv()
@@ -54,8 +54,8 @@ class MongoDatabase:
             self.scores.update_one(
                 {'score_name': score_name},
                 {'$set': {
-                    'title': title or score_name,
-                    'composer': composer,
+                    'title': title if title is not None else score_name,
+                    'composer': composer if composer is not None else "",
                     'data': Binary(data),
                     'score_hash': score_hash
                 }},

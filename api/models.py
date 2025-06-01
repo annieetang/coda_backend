@@ -41,3 +41,7 @@ class ExerciseRequest(BaseModel):
     title: Optional[str] = None
     composer: Optional[str] = None
     is_exercise: bool
+
+class DeleteScoreRequest(BaseModel):
+    filename: str
+

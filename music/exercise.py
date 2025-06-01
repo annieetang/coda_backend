@@ -32,7 +32,7 @@ def get_all_exercises(score):
             for line in part.lines:
                 description = "Single voice view, showing all notes in a single voice or melodic line.<br><br>Purpose: To isolate and target practice one voice at a time."
                 # if len(part.lines) > 1:
-                l['Voice Level: original'].append((description, get_musicxml_from_music21(line.original_stream)))
+                l['Voice Level: Original'].append((description, get_musicxml_from_music21(line.original_stream)))
                 for exercise_name, exercises in line.exercises.items():
                     # l['line_generated_exercise'].append(get_musicxml_from_music21(exercise))
                     for exercise in exercises:
