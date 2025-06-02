@@ -6,6 +6,12 @@ from music.matrix import MusicMatrixRepresentation
 from music.processor import get_musicxml_from_music21, get_music21_from_music_matrix_representation
 import math
 
+MOD_EXERCISE_DESCRIPTIONS = {
+    "dotted": "Dotted exercise.<br><br>Purpose: improve the evenness of playing by strengthening the fingers and allowing the brain to regroup the passage in a different way. See https://practisingthepiano.com/on-dotted-rhythms/",
+    "chordified": "Chordified exercise.<br><br>Purpose: improves hand positioning, grouping, as well as harmonic awareness.",
+    "slowed_down": "Slowed down exercise.<br><br>Purpose: become more familiar with the notes, develop muscle memory and finger coordination slowly.",
+}
+
 # TODO: clean up structure
 def get_all_exercises(score):
         # turn l into a hashmap

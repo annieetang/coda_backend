@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Response, Request, Form
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 import os
 from werkzeug.utils import secure_filename
 from collections import defaultdict
@@ -140,8 +140,8 @@ async def get_file_mxl(data: FileDataRequest):
     else:
         raise HTTPException(status_code=404, detail="Score not found or no data available")
 
-@router.post("/get_measure_from_second", response_model=MeasureResponse)
-async def get_measure_from_second(data: MeasureRequest):
+@router.post("/get_measures_from_seconds", response_model=MeasureResponse)
+async def get_measures_from_seconds(data: MeasureRequest):
     """Convert a time in seconds to a measure number."""
     score = get_music21_score_notation(data.filename)
     
@@ -157,9 +157,16 @@ async def get_measure_from_second(data: MeasureRequest):
     beats_per_measure = time_signature.numerator
     if bpm is None:
         bpm = 120  # Default to 120 BPM if no tempo marking found
-    measure_number = math.floor(data.second / 60 * bpm / beats_per_measure) + 1
     
-    return {"measure_number": measure_number}
+    print(data.start_second, data.end_second)
+    start_measure = math.floor(data.start_second / 60 * bpm / beats_per_measure) + 1
+    if data.end_second is not None:
+        end_measure = math.floor(data.end_second / 60 * bpm / beats_per_measure) + 1
+        print(start_measure, end_measure)
+        return {"start_measure": start_measure, "end_measure": end_measure}
+    print(start_measure)
+    print("end_measure is None")
+    return {"start_measure": start_measure, "end_measure": None}
 
 @router.post("/slice_callback")
 async def slice_callback(request: Request):

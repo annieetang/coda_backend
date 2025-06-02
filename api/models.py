@@ -3,10 +3,12 @@ from typing import Optional, Dict, List, Any
 
 class MeasureRequest(BaseModel):
     filename: str
-    second: float
+    start_second: float
+    end_second: Optional[float] = None
 
 class MeasureResponse(BaseModel):
-    measure_number: int
+    start_measure: int
+    end_measure: Optional[int] = None
 
 class GenerateRequest(BaseModel):
     filename: str
