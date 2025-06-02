@@ -7,9 +7,9 @@ from music.processor import get_musicxml_from_music21, get_music21_from_music_ma
 import math
 
 MOD_EXERCISE_DESCRIPTIONS = {
-    "dotted": "Dotted exercise.<br><br>Purpose: improve the evenness of playing by strengthening the fingers and allowing the brain to regroup the passage in a different way. See https://practisingthepiano.com/on-dotted-rhythms/",
-    "chordified": "Chordified exercise.<br><br>Purpose: improves hand positioning, grouping, as well as harmonic awareness.",
-    "slowed_down": "Slowed down exercise.<br><br>Purpose: become more familiar with the notes, develop muscle memory and finger coordination slowly.",
+    "dotted": "Purpose: improve the evenness of playing by strengthening the fingers and allowing the brain to regroup the passage in a different way. See https://practisingthepiano.com/on-dotted-rhythms/",
+    "chordified": "Purpose: improves hand positioning, grouping, as well as harmonic awareness.",
+    "slowed_down": "Purpose: become more familiar with the notes, develop muscle memory and finger coordination slowly.",
 }
 
 # TODO: clean up structure
@@ -43,7 +43,7 @@ def get_all_exercises(score):
                     # l['line_generated_exercise'].append(get_musicxml_from_music21(exercise))
                     for exercise in exercises:
                         # improve the descriptions + tooltip
-                        description = f"{exercise_name.replace('_', ' ').title()} exercise.<br><br>Purpose: [details on why insert here]"
+                        description = f"{exercise_name.replace('_', ' ').title()} exercise.<br><br>{MOD_EXERCISE_DESCRIPTIONS[exercise_name]}"
                         l["Voice Level: " + exercise_name.replace('_', ' ').title()].append((description, get_musicxml_from_music21(exercise)))
         return l
 
@@ -52,7 +52,6 @@ class Score:
         self.filename = filename
         self.score_mxl = converter.parse(filename)
         self.exercises = get_all_exercises(self.score_mxl)
-        # self.bpm = 
 
     def get_exercises(self):
         return self.exercises
@@ -76,8 +75,8 @@ class ExerciseScore:
 
         key_signatures = self.original_stream.recurse().getElementsByClass(key.KeySignature)
         self.key_signature = key_signatures[0] if key_signatures else None
-        self.time_signature = self._extract_time_signature() # music21 time signature object
-        self.quantization = self._calculate_quantization() # int
+        self.time_signature = self._extract_time_signature()
+        self.quantization = self._calculate_quantization() 
 
         self.parts = self._extract_parts() # list of ExercisePart objects
     
@@ -126,7 +125,7 @@ class ExerciseScore:
                 parts.append(ExercisePart(part, self.key_signature, self.time_signature, self.quantization))
         return parts
 
-class ExercisePart():
+class ExercisePart:
     def __init__(self, music21_part, key_signature, time_signature, quantization):
         self.original_stream = music21_part
         self.key_signature = key_signature
