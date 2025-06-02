@@ -158,14 +158,10 @@ async def get_measures_from_seconds(data: MeasureRequest):
     if bpm is None:
         bpm = 120  # Default to 120 BPM if no tempo marking found
     
-    print(data.start_second, data.end_second)
     start_measure = math.floor(data.start_second / 60 * bpm / beats_per_measure) + 1
     if data.end_second is not None:
         end_measure = math.floor(data.end_second / 60 * bpm / beats_per_measure) + 1
-        print(start_measure, end_measure)
         return {"start_measure": start_measure, "end_measure": end_measure}
-    print(start_measure)
-    print("end_measure is None")
     return {"start_measure": start_measure, "end_measure": None}
 
 @router.post("/slice_callback")
